@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhythm Writing 2</title>
+<script src="https://www.verovio.org/javascript/latest/verovio-toolkit-wasm.js"></script>
+<style>
+:root{font-family:Arial,sans-serif;color:#202124;background:#f5f6f8}*{box-sizing:border-box}
+body{max-width:1120px;margin:0 auto;padding:24px 18px;text-align:center}
+h1{margin:0 0 8px}.intro{max-width:880px;margin:0 auto 18px;line-height:1.5}
+.panel{background:#fff;border-radius:12px;padding:18px;margin:16px 0;box-shadow:0 2px 8px #00000012}
+h2{font-size:1.15rem;margin:0 0 12px}.meter{font-size:1.8rem;font-weight:bold}
+.score{min-height:130px;overflow-x:auto;display:flex;align-items:center;justify-content:center}
+.score svg{max-width:100%;height:auto}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px auto}
+button{font:inherit;cursor:pointer;border:1px solid #687078;border-radius:8px;background:#fff;padding:10px 13px}
+button:hover:not(:disabled){background:#edf2f7}button:disabled{opacity:.45;cursor:default}
+button.primary{background:#225ea8;color:#fff;border-color:#225ea8}button.primary:hover:not(:disabled){background:#194b88}
+button.danger{border-color:#b42318;color:#b42318}
+.event{min-width:58px;padding:9px 6px;border:1px solid #b8c0c8;border-radius:6px;background:#f8fafc;position:relative}
+.event .symbol{font-size:1.55rem;display:block;line-height:1.2}.event small{font-size:.72rem;color:#59636e}
+.note-button{min-width:76px;min-height:66px;padding:7px 12px;display:flex;align-items:center;justify-content:center}
+.note-icon{display:block;width:48px;height:42px;color:#202124}
+.answer-score{order:0;margin:0 auto 8px;width:100%}
+#noteButtons{order:1}
+#noteButtons .note-icon{pointer-events:none}
+.event.selected{outline:3px solid #2b6cb0;background:#eaf3ff}.selected-answer-note{filter:drop-shadow(0 0 3px #2b6cb0)}.barToken{font-weight:bold;font-size:2rem;color:#333;padding:5px 7px;min-width:28px}
+.hint{color:#4b5563;font-size:.95rem;line-height:1.45}.feedback{font-weight:bold;min-height:28px;margin:12px 0}
+#renderedAnswer{min-height:130px;overflow-x:auto;display:flex;align-items:center;justify-content:center}
+#renderedAnswer svg{max-width:100%;height:auto}
+.status{font-size:.9rem;color:#4b5563;margin-top:8px}
+@media(max-width:600px){body{padding:12px 8px}.panel{padding:12px}.event{min-width:48px}}
+</style>
+</head>
+<body>
+<h1>Rhythm Writing 2</h1>
+<p class="intro">Rewrite the rhythm in the assigned time signature using proper beaming. Preserve the rhythm’s exact duration and order using ties as needed.</p>
+
+<section class="panel">
+  <h2>Original Rhythm</h2>
+  <div id="sourceScore" class="score" aria-label="Original rhythm notation"></div>
+</section>
+
+<section class="panel">
+  <h2>Rewrite the Rhythm</h2>
+  <div class="meter" id="meterLabel">3/4</div>
+  <div id="renderedAnswer" class="score answer-score" aria-label="Student answer rendered as music notation"></div>
+  <div class="toolbar" id="noteButtons" aria-label="Note values">
+    <button class="note-button" data-dur="0.5" data-label="eighth" aria-label="Insert eighth note" title="Eighth note">
+      <svg class="note-icon" viewBox="0 0 64 52" role="img" aria-label="Eighth note"><ellipse cx="23" cy="39" rx="9" ry="6" transform="rotate(-22 23 39)" fill="currentColor"/><path d="M31 38V8" stroke="currentColor" stroke-width="3.5" fill="none"/><path d="M31 8C49 10 49 22 39 27C46 17 39 14 31 13Z" fill="currentColor"/></svg>
+    </button>
+    <button class="note-button" data-dur="1" data-label="quarter" aria-label="Insert quarter note" title="Quarter note">
+      <svg class="note-icon" viewBox="0 0 64 52" role="img" aria-label="Quarter note"><ellipse cx="23" cy="39" rx="9" ry="6" transform="rotate(-22 23 39)" fill="currentColor"/><path d="M31 38V8" stroke="currentColor" stroke-width="3.5" fill="none"/></svg>
+    </button>
+    <button class="note-button" data-dur="1.5" data-label="dotted quarter" aria-label="Insert dotted quarter note" title="Dotted quarter note">
+      <svg class="note-icon" viewBox="0 0 72 52" role="img" aria-label="Dotted quarter note"><ellipse cx="23" cy="39" rx="9" ry="6" transform="rotate(-22 23 39)" fill="currentColor"/><path d="M31 38V8" stroke="currentColor" stroke-width="3.5" fill="none"/><circle cx="45" cy="37" r="2.7" fill="currentColor"/></svg>
+    </button>
+    <button class="note-button" data-dur="2" data-label="half" aria-label="Insert half note" title="Half note">
+      <svg class="note-icon" viewBox="0 0 64 52" role="img" aria-label="Half note"><ellipse cx="23" cy="39" rx="9" ry="6" transform="rotate(-22 23 39)" fill="white" stroke="currentColor" stroke-width="2.8"/><path d="M31 38V8" stroke="currentColor" stroke-width="3.5" fill="none"/></svg>
+    </button>
+    <button class="note-button" data-dur="3" data-label="dotted half" aria-label="Insert dotted half note" title="Dotted half note">
+      <svg class="note-icon" viewBox="0 0 72 52" role="img" aria-label="Dotted half note"><ellipse cx="23" cy="39" rx="9" ry="6" transform="rotate(-22 23 39)" fill="white" stroke="currentColor" stroke-width="2.8"/><path d="M31 38V8" stroke="currentColor" stroke-width="3.5" fill="none"/><circle cx="45" cy="37" r="2.7" fill="currentColor"/></svg>
+    </button>
+  </div>
+  <div class="toolbar">
+    <button id="barButton">＋ Insert barline</button>
+    <button id="tieButton">Tie to next note</button>
+    <button id="beamButton">Beam to next eighth note</button>
+    <button id="deleteButton">Delete selected</button>
+    <button id="undoButton">Undo</button>
+    <button id="clearButton">Clear answer</button>
+  </div>
+  <div class="toolbar">
+    <button class="primary" id="checkButton">Check my notation</button>
+    <button id="solutionButton">Show solution</button>
+    <button class="primary" id="nextButton">Next rhythm</button>
+  </div>
+  <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+  <div class="status" id="answerStatus"></div>
+</section>
+
+<script>
+"use strict";
+let vrvToolkit = null;
+let sourceUnits = [];
+let sourceEvents = [];
+let meter = "3/4";
+let answer = [];
+let selected = -1;
+let undoStack = [];
+let nextNoteId = 1;
+let advancingAfterCorrect = false;
+const $ = id => document.getElementById(id);
+const meters = ["4/4", "3/4", "6/8"];
+const durationNames = {"0.5":"eighth","1":"quarter","1.5":"dotted quarter","2":"half","3":"dotted half"};
+const symbols = {"0.5":"♪","1":"♩","1.5":"♩.","2":"𝅗𝅥","3":"𝅗𝅥."};
+function choice(a){ return a[Math.floor(Math.random()*a.length)]; }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+function ticksFor(events){ return events.reduce((sum,e)=>sum+(e.type==="bar"?0:Math.round(e.dur*2)),0); }
+function sumBeats(events){ return ticksFor(events)/2; }
+
+function generateSource(){
+  // Exactly 12 quarter-note beats: one half, two dotted quarters,
+  // three quarters, and eight eighth notes, in a freshly shuffled order.
+  const durations = [2, 1.5, 1.5, 1, 1, 1, .5, .5, .5, .5, .5, .5, .5, .5];
+  for(let i=durations.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [durations[i],durations[j]]=[durations[j],durations[i]];
+  }
+  sourceEvents=durations.map((dur,index)=>({type:"note",dur,unit:"source"+index}));
+  sourceUnits=[];
+  if(ticksFor(sourceEvents)!==24)throw new Error("Internal error: generated rhythm was not exactly 12 beats.");
+  return sourceEvents;
+}
+
+function durAttrs(dur){
+  if(dur===0.5) return 'dur="8"';
+  if(dur===1) return 'dur="4"';
+  if(dur===1.5) return 'dur="4" dots="1"';
+  if(dur===2) return 'dur="2"';
+  if(dur===3) return 'dur="2" dots="1"';
+  throw new Error("Unsupported duration: "+dur);
+}
+function noteMEI(event,id){
+  return `<note xml:id="${id}" pname="c" oct="4" ${durAttrs(event.dur)}/>`;
+}
+function groupEighths(events){
+  // Beam adjacent eighth notes only when they belong to the same original eighth-pair unit.
+  let out="", pending=[];
+  const flush=()=>{if(pending.length===2)out+=`<beam>${pending.join("")}</beam>`;else out+=pending.join("");pending=[];};
+  for(let i=0;i<events.length;i++){
+    const e=events[i];
+    const next=events[i+1];
+    if(e.dur===0.5 && next && next.dur===0.5 && e.unit && e.unit===next.unit && e.unit==="eighth-note pair"){
+      pending.push(noteMEI(e,`src${i}`));
+      pending.push(noteMEI(next,`src${i+1}`));
+      flush(); i++;
+    }else{
+      flush(); out+=noteMEI(e,`src${i}`);
+    }
+  }
+  flush();
+  return out;
+}
+function scoreMEIForSource(){
+  const contents=sourceEvents.map((e,i)=>noteMEI(e,`src${i}`)).join("");
+  return `<mei xmlns="http://www.music-encoding.org/ns/mei"><music><body><mdiv><score><scoreDef><staffGrp><staffDef n="1" lines="5" clef.shape="G" clef.line="2"/></staffGrp></scoreDef><section><measure n="1"><staff n="1"><layer n="1">${contents}</layer></staff></measure></section></score></mdiv></body></music></mei>`;
+}
+function answerMEI(){
+  const beats=meter==="4/4"?4:3;
+  // Assign stable IDs before engraving so beams and ties can safely refer
+  // to the same notes, including ties that cross a barline.
+  answer.forEach(e=>{
+    if(e.type==="note" && !e.id) e.id=`note${nextNoteId++}`;
+  });
+  const bars=[];
+  let current=[];
+  for(const e of answer){
+    if(e.type==="bar"){bars.push(current);current=[];continue;}
+    current.push(e);
+  }
+  bars.push(current);
+  let measures="";
+  bars.forEach((events,mi)=>{
+    let layer="", measureTies="";
+
+    // Build tie relationships in a separate pass. Beam grouping can skip
+    // over notes in the engraving loop, but must never skip their ties.
+    for(const e of events){
+      if(!e.tieToNext) continue;
+      const globalIndex=answer.indexOf(e);
+      let j=globalIndex+1;
+      while(j<answer.length && answer[j].type==="bar") j++;
+      const next=answer[j];
+      if(next && next.type==="note" && next.id){
+        measureTies+=`<tie startid="#${e.id}" endid="#${next.id}"/>`;
+      }
+    }
+
+    for(let i=0;i<events.length;i++){
+      const e=events[i];
+      const m=noteMEI(e,e.id);
+      if(e.dur===0.5 && e.beamToNext && events[i+1] && events[i+1].dur===0.5){
+        const group=[m];
+        let j=i;
+        while(events[j] && events[j].dur===0.5 && events[j].beamToNext &&
+              events[j+1] && events[j+1].dur===0.5){
+          group.push(noteMEI(events[j+1],events[j+1].id));
+          j++;
+        }
+        layer+=`<beam>${group.join("")}</beam>`;
+        i=j;
+      }else{
+        layer+=m;
+      }
+    }
+    measures+=`<measure n="${mi+1}"><staff n="1"><layer n="1">${layer}</layer></staff>${measureTies}</measure>`;
+  });
+  const meterDef=meter==="6/8"?'meter.count="6" meter.unit="8"':'meter.count="'+beats+'" meter.unit="4"';
+  return `<mei xmlns="http://www.music-encoding.org/ns/mei"><music><body><mdiv><score><scoreDef ${meterDef}><staffGrp><staffDef n="1" lines="5" clef.shape="G" clef.line="2"/></staffGrp></scoreDef><section>${measures}</section></score></mdiv></body></music></mei>`;
+}
+
+function renderMEI(target,mei){
+  if(!vrvToolkit){$(target).textContent="Loading music engraving…";return;}
+  try{
+    vrvToolkit.setOptions({scale:58,adjustPageHeight:true,pageWidth:1800,pageHeight:800,breaks:"none",footer:"none",header:"none",autoBeam:false,spacingLinear:1.25,spacingNonLinear:1.15});
+    $(target).innerHTML=vrvToolkit.renderData(mei,{});
+    if(target==="renderedAnswer") bindRenderedNoteSelection();
+  }catch(err){
+    $(target).textContent="Notation could not be rendered. Please try the next exercise.";
+    console.error(err);
+  }
+}
+function renderSource(){
+  renderMEI("sourceScore",scoreMEIForSource());
+  // The original-rhythm panel intentionally shows only its heading and notation.
+}
+function renderAnswerTokens(){
+  // The engraved Verovio score is the sole visual representation of the answer.
+}
+function bindRenderedNoteSelection(){
+  const svg=$("renderedAnswer").querySelector("svg");
+  if(!svg) return;
+  answer.forEach((event,index)=>{
+    if(event.type!=="note"||!event.id) return;
+    const node=svg.querySelector(`#${CSS.escape(event.id)}`);
+    if(!node) return;
+    node.style.cursor="pointer";
+    node.setAttribute("tabindex","0");
+    node.setAttribute("role","button");
+    node.setAttribute("aria-label",`Select ${durationNames[String(event.dur)]||"note"}`);
+    if(index===selected) node.classList.add("selected-answer-note");
+    const select=()=>{selected=index;$("feedback").textContent=`Selected ${durationNames[String(event.dur)]||"note"}.`;renderAnswer();};
+    node.addEventListener("click",select);
+    node.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}});
+  });
+}
+
+function renderAnswer(){
+  renderMEI("renderedAnswer",answerMEI());
+  $("answerStatus").textContent=`Current duration: ${sumBeats(answer)} beats.`;
+}
+function addItem(item){
+  undoStack.push(clone(answer));
+  const at=selected<0?answer.length:selected+1;
+  answer.splice(at,0,item);
+
+  // If the preceding note was marked for a tie before this note existed,
+  // complete that tie automatically. Barline tokens may sit between them.
+  if(item.type==="note"){
+    let previous=at-1;
+    while(previous>=0 && answer[previous].type==="bar") previous--;
+    const source=answer[previous];
+    if(source && source.type==="note" && source.tieToNext){
+      item.tiedFrom=item.tiedFrom||[];
+      if(!item.tiedFrom.includes(source.id)) item.tiedFrom.push(source.id);
+    }
+  }
+
+  selected=at;
+  $("feedback").textContent="";
+  renderAnswer();
+}
+$("noteButtons").addEventListener("click",ev=>{
+  const b=ev.target.closest("button[data-dur]");if(!b)return;
+  addItem({type:"note",id:"note"+(nextNoteId++),dur:Number(b.dataset.dur),tieToNext:false,tiedFrom:[]});
+});
+$("barButton").onclick=()=>addItem({type:"bar"});
+
+$("beamButton").onclick=()=>{
+  if(selected<0 || !answer[selected] || answer[selected].type!=="note" || answer[selected].dur!==0.5){
+    $("feedback").textContent="Select an eighth note to beam.";return;
+  }
+  const next=answer[selected+1];
+  if(answer[selected].beamToNext){
+    undoStack.push(clone(answer));
+    answer[selected].beamToNext=false;
+    $("feedback").textContent="Beam removed.";
+    renderAnswer();
+    return;
+  }
+  if(!next || next.type!=="note" || next.dur!==0.5){
+    $("feedback").textContent="The next item must be an eighth note, with no barline between the notes.";return;
+  }
+  undoStack.push(clone(answer));
+  answer[selected].beamToNext=true;
+  $("feedback").textContent="Beam added. Continue by selecting the next eighth note to extend the group.";
+  renderAnswer();
+};
+
+$("deleteButton").onclick=()=>{
+  if(selected<0)return;
+  undoStack.push(clone(answer));
+  const removed=answer[selected];
+  answer.splice(selected,1);
+  // Clean up any tie references to a deleted note.
+  answer.forEach(e=>{if(e.type==="note"){e.tieToNext=false;e.tiedFrom=[];e.beamToNext=false;}});
+  selected=-1;renderAnswer();
+};
+$("undoButton").onclick=()=>{if(undoStack.length){answer=undoStack.pop();selected=-1;renderAnswer();}};
+$("clearButton").onclick=()=>{undoStack.push(clone(answer));answer=[];selected=-1;$("feedback").textContent="";renderAnswer();};
+$("tieButton").onclick=()=>{
+  if(selected<0||!answer[selected]||answer[selected].type!=="note"){
+    $("feedback").textContent="Select the first note of the tie.";return;
+  }
+  const source=answer[selected];
+  let j=selected+1;
+  while(j<answer.length&&answer[j].type==="bar")j++;
+  const next=(j<answer.length&&answer[j].type==="note")?answer[j]:null;
+
+  undoStack.push(clone(answer));
+
+  // Toggle off an existing or pending tie.
+  if(source.tieToNext){
+    source.tieToNext=false;
+    if(next && next.tiedFrom){
+      next.tiedFrom=next.tiedFrom.filter(id=>id!==source.id);
+    }
+    $("feedback").textContent="Tie removed.";
+    renderAnswer();
+    return;
+  }
+
+  source.tieToNext=true;
+  if(next){
+    next.tiedFrom=next.tiedFrom||[];
+    if(!next.tiedFrom.includes(source.id)) next.tiedFrom.push(source.id);
+    $("feedback").textContent="Tie added.";
+  }else{
+    $("feedback").textContent="Tie armed. Insert a barline if needed, then add the note that the tie should connect to.";
+  }
+  renderAnswer();
+};
+
+function beatsPerBar(){return meter==="4/4"?4:3;}
+function buildSolution(){
+  // Create the correctly barred, tied, and beamed spelling of the source.
+  // Notes are split at barlines and, where required, at the metric
+  // articulation point: beat 3 in both 3/4 and 4/4, or the
+  // second dotted-quarter beat in 6/8.
+  const measureLength=meter==="4/4"?4:3;
+  const articulationPoint=meter==="6/8"?1.5:2;
+  let position=0;
+  let idCounter=1;
+
+  // Build fragments by source note so ties remain linked across both
+  // metric articulation points and barlines.
+  const rebuilt=[];
+  position=0;
+  idCounter=1;
+  for(const source of sourceEvents){
+    let remaining=source.dur;
+    const fragments=[];
+    const fragmentEnds=[];
+    while(remaining>0.0001){
+      const offset=position%measureLength;
+      let capacity=Math.min(remaining,measureLength-offset);
+      const isConventionalHalf=meter==="4/4" &&
+        Math.abs(offset-1)<0.0001 && Math.abs(remaining-2)<0.0001;
+      if(!isConventionalHalf && offset<articulationPoint-0.0001 &&
+         offset+capacity>articulationPoint+0.0001){
+        capacity=articulationPoint-offset;
+      }
+      fragments.push({type:"note",id:`sol${idCounter++}`,dur:capacity,
+        tieToNext:false,tiedFrom:[],beamToNext:false});
+      position+=capacity;
+      fragmentEnds.push(position);
+      remaining-=capacity;
+    }
+    for(let i=0;i<fragments.length-1;i++){
+      fragments[i].tieToNext=true;
+      fragments[i+1].tiedFrom.push(fragments[i].id);
+    }
+    for(let i=0;i<fragments.length;i++){
+      rebuilt.push(fragments[i]);
+      if(Math.abs(fragmentEnds[i]/measureLength-
+          Math.round(fragmentEnds[i]/measureLength))<0.0001 &&
+         fragmentEnds[i]<12-0.0001){
+        rebuilt.push({type:"bar"});
+      }
+    }
+  }
+
+  // Add meter-correct beams to eighth notes, grouping by metric pulse.
+  let measure=[];
+  const applyBeams=events=>{
+    let offset=0;
+    for(let i=0;i<events.length;){
+      if(events[i].dur!==0.5){offset+=events[i].dur;i++;continue;}
+      const pulseSize=meter==="6/8"?1.5:1;
+      const pulse=Math.floor((offset+0.00001)/pulseSize);
+      const group=[events[i]];
+      let j=i+1, nextOffset=offset+0.5;
+      while(j<events.length && events[j].dur===0.5 &&
+            Math.floor((nextOffset+0.00001)/pulseSize)===pulse){
+        group.push(events[j]);
+        nextOffset+=0.5;
+        j++;
+      }
+      for(let k=0;k<group.length-1;k++) group[k].beamToNext=true;
+      offset+=group.length*0.5;
+      i=j;
+    }
+  };
+  for(const e of rebuilt){
+    if(e.type==="bar"){applyBeams(measure);measure=[];}
+    else measure.push(e);
+  }
+  applyBeams(measure);
+  return rebuilt;
+}
+
+function showSolution(){
+  undoStack.push(clone(answer));
+  answer=buildSolution();
+  selected=-1;
+  $("feedback").textContent="Solution shown. Compare the barlines, ties, and beams with your original rhythm.";
+  renderAnswer();
+}
+
+function checkAnswer(){
+  if(advancingAfterCorrect) return;
+  const total=sumBeats(answer), beat=beatsPerBar();
+  if(Math.abs(total-12)>0.0001){$("feedback").textContent=`Your answer totals ${total} beats. It must total exactly 12.`;return;}
+  const bars=answer.filter(e=>e.type==="bar");
+  const positions=[];let cur=0;
+  answer.forEach(e=>{if(e.type==="bar")positions.push(cur);else cur+=e.dur;});
+  // Preserve the exact note sequence in every meter; only barline placement changes.
+  // Measure boundaries are counted in quarter-note units; 6/8 bars contain three quarter notes.
+  const expected=12/beat-1;
+  const expectedBarPositions=Array.from({length:expected},(_,i)=>(i+1)*beat);
+  const correctBars=bars.length===expected &&
+    positions.length===expectedBarPositions.length &&
+    expectedBarPositions.every((target,i)=>Math.abs(positions[i]-target)<0.0001);
+  if(!correctBars){
+    const guidance = meter==="4/4"
+       ? "In 4/4, place barlines after beats 4 and 8."
+       : meter==="6/8"
+         ? "In 6/8, make four measures of six eighth-note beats (three quarter-note beats) each."
+         : "In 3/4, make four measures of three quarter-note beats each.";
+    $("feedback").textContent=`The total is 12 beats, but the barlines are misplaced. ${guidance}`;
+    return;
+  }
+  if(meter==="4/4"){
+    // Beat 3 is clear when a note value begins exactly on beat 3.
+    // A tied continuation beginning on beat 3 counts as that onset: the tie
+    // carries sound across the beat, but the notated subdivision is explicit.
+    // The conventional half note beginning on beat 2 is also permitted.
+    const measures=[];
+    let current=[];
+    for(const e of answer){
+      if(e.type==="bar"){measures.push(current);current=[];}
+      else current.push(e);
+    }
+    measures.push(current);
+
+    const epsilon=0.0001;
+    const obscuresBeat3=measures.some(events=>{
+      let offset=0;
+      let hasBeat3Onset=false;
+      let hasConventionalHalfOnBeat2=false;
+      for(const e of events){
+        if(Math.abs(offset-2)<epsilon) hasBeat3Onset=true;
+        if(Math.abs(offset-1)<epsilon && Math.abs(e.dur-2)<epsilon){
+          hasConventionalHalfOnBeat2=true;
+        }
+        offset+=e.dur;
+      }
+      return !hasBeat3Onset && !hasConventionalHalfOnBeat2;
+    });
+
+    if(obscuresBeat3){
+      $("feedback").textContent="In 4/4, beat 3 must be clear. Begin a note (including a tied continuation) on beat 3, or use the conventional half note beginning on beat 2. Check the note onsets in this measure.";
+      return;
+    }
+  }
+  if(meter==="6/8"){
+    // The second dotted-quarter pulse begins 1.5 quarter-note units into
+    // each bar. A note must be notated at that boundary. A tied continuation
+    // counts as an onset there; an unsplit quarter note spanning the boundary
+    // does not (e.g. three quarter notes in a bar is invalid).
+    const measures=[];
+    let current=[];
+    for(const e of answer){
+      if(e.type==="bar"){measures.push(current);current=[];}
+      else current.push(e);
+    }
+    measures.push(current);
+
+    const epsilon=0.0001;
+    const missingSecondPulse=measures.some(events=>{
+      let offset=0;
+      let foundBoundaryOnset=false;
+      for(const e of events){
+        if(Math.abs(offset-1.5)<epsilon) foundBoundaryOnset=true;
+        offset+=e.dur;
+      }
+      return !foundBoundaryOnset;
+    });
+    if(missingSecondPulse){
+      $("feedback").textContent="In 6/8, the second dotted-quarter beat must be articulated. Make a note begin at the second compound beat; if a note crosses that boundary, split it into eighth notes and tie them together.";
+      return;
+    }
+  }
+
+  if(answer.some(e=>e.type!=="bar"&&e.type!=="note")){$("feedback").textContent="Use note values only; this exercise has no rests.";return;}
+  const rewritten=[];
+  for(let i=0;i<answer.length;i++){
+    const e=answer[i];
+    if(e.type==="bar") continue;
+    if(e.tiedFrom && e.tiedFrom.length) continue;
+    let duration=e.dur, j=i;
+    while(answer[j] && answer[j].type==="note" && answer[j].tieToNext){
+      let k=j+1;
+      while(answer[k] && answer[k].type==="bar") k++;
+      if(!answer[k] || answer[k].type!=="note" || !(answer[k].tiedFrom||[]).includes(answer[j].id)){
+        $("feedback").textContent="One of your ties does not connect to the next note correctly.";return;
+      }
+      duration+=answer[k].dur;j=k;
+    }
+    rewritten.push(duration);
+    i=j;
+  }
+  const sourceDurations=sourceEvents.map(e=>e.dur);
+  // In 4/4, these measure patterns are permitted when they reproduce the
+  // source rhythm: dotted half + quarter [3,1], quarter + dotted half [1,3],
+  // and quarter + half + quarter [1,2,1]. They are NOT alternate answers:
+  // the duration sequence below must still exactly match the source rhythm.
+  const equivalent=rewritten.length===sourceDurations.length &&
+    rewritten.every((d,i)=>Math.abs(d-sourceDurations[i])<0.0001);
+  if(!equivalent){
+    $("feedback").textContent="The measure divisions are correct, but the rhythm does not exactly match the original. Check the note onsets and ties.";
+    return;
+  }
+
+  // Expected beams are determined by the metric pulse: quarter-note beats
+  // in 3/4 and 4/4; dotted-quarter beats in 6/8. Students must add every link.
+  const pulseSize=meter==="6/8"?1.5:1;
+  const expectedBeamPairs=new Set();
+  const actualBeamPairs=new Set();
+  let measureEvents=[];
+  const checkMeasureBeams=events=>{
+    let position=0;
+    for(let i=0;i<events.length;i++){
+      const e=events[i];
+      const next=events[i+1];
+      if(e.beamToNext && next && e.id && next.id) actualBeamPairs.add(e.id+"->"+next.id);
+      if(e.dur===0.5 && next && next.dur===0.5 &&
+         Math.floor((position+0.00001)/pulseSize)===
+         Math.floor((position+0.5+0.00001)/pulseSize)){
+        expectedBeamPairs.add(e.id+"->"+next.id);
+      }
+      position+=e.dur;
+    }
+  };
+  for(const e of answer){
+    if(e.type==="bar"){checkMeasureBeams(measureEvents);measureEvents=[];}
+    else measureEvents.push(e);
+  }
+  checkMeasureBeams(measureEvents);
+  const beamsCorrect=expectedBeamPairs.size===actualBeamPairs.size &&
+    [...expectedBeamPairs].every(pair=>actualBeamPairs.has(pair));
+  if(!beamsCorrect){
+    $("feedback").textContent=meter==="6/8"
+      ? "The rhythm and barlines are correct, but the beaming is not. In 6/8, beam adjacent eighth notes together within each dotted-quarter-note beat."
+      : `The rhythm and barlines are correct, but the beaming is not. In ${meter}, beam adjacent eighth notes together in pairs within each quarter-note beat.`;
+    return;
+  }
+  $("feedback").textContent="Correct! The next rhythm will appear automatically.";
+  advancingAfterCorrect=true;
+  setTimeout(()=>{
+    newExercise();
+    advancingAfterCorrect=false;
+  },1000);
+}
+$("checkButton").onclick=checkAnswer;
+$("solutionButton").onclick=showSolution;
+function newExercise(){
+  meter=choice(meters);
+  generateSource();
+  if(ticksFor(sourceEvents)!==24)throw new Error("Internal error: generated rhythm was not exactly 12 beats.");
+  $("meterLabel").textContent=meter;
+  // Keep the assigned meter visible, without additional instructional text.
+  answer=[];selected=-1;undoStack=[];nextNoteId=1;$("feedback").textContent="";
+  renderSource();renderAnswer();
+}
+$("nextButton").onclick=newExercise;
+function initializeVerovio(){
+  vrvToolkit=new verovio.toolkit();
+  newExercise();
+}
+if(window.verovio&&window.verovio.module){
+  window.verovio.module.onRuntimeInitialized=initializeVerovio;
+}else{
+  $("sourceScore").textContent="Verovio is loading…";
+  window.addEventListener("load",()=>{if(window.verovio&&window.verovio.module)window.verovio.module.onRuntimeInitialized=initializeVerovio;});
+}
+</script>
+</body>
+</html>
